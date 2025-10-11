@@ -2,13 +2,22 @@
 
 import asyncio
 import logging
-from typing import AsyncGenerator
+from typing import Optional
 
 import aiohttp
 import uvloop
 
+from .proxies import Proxies
 from .base import BaseCrawler
 from .structures import CrawlerConfig, CrawlRequest, CrawlResponse
+from .extractor import (
+    BaseExtractor,
+    ContentExtractor,
+    HTMLExtractor,
+    MarkdownExtractor,
+    ExtractionType,
+    RawResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,17 +49,13 @@ class AsyncCrawler(BaseCrawler):
         """
         super().__init__(config)
         self._rate_limiter = None
-
-        # Set up uvloop if configured
-        if self.config.use_uvloop:
-            try:
-                asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-                logger.info("Using uvloop for enhanced performance")
-            except ImportError:
-                logger.warning("uvloop not available, using default event loop")
+        self._proxies = Proxies(self.config.proxies)
+        self._extractors = self._init_extractors()
 
     async def setup(self) -> None:
         """Set up the crawler session and resources."""
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
         # Create timeout configuration
         timeout = aiohttp.ClientTimeout(total=self.config.request_timeout)
 
@@ -78,6 +83,34 @@ class AsyncCrawler(BaseCrawler):
             self._session = None
 
         self._semaphore = None
+    
+    def _init_extractors(self) -> dict[ExtractionType, BaseExtractor]:
+        """Initialize extractors based on configuration.
+        
+        Returns:
+            Dictionary mapping extraction types to extractor instances
+        """
+        extraction_config = self.config.extraction_config
+        
+        return {
+            ExtractionType.HTML: HTMLExtractor(extraction_config),
+            ExtractionType.CONTENT: ContentExtractor(extraction_config),
+            ExtractionType.MARKDOWN: MarkdownExtractor(extraction_config),
+        }
+    
+    def _get_extractor(self, extraction_type: Optional[ExtractionType]) -> Optional[BaseExtractor]:
+        """Get the appropriate extractor for the given type.
+        
+        Args:
+            extraction_type: Type of extraction to perform
+            
+        Returns:
+            Extractor instance or None if no extraction requested
+        """
+        if not extraction_type:
+            return None
+        
+        return self._extractors.get(extraction_type)
 
     async def fetch(self, request: CrawlRequest) -> CrawlResponse:
         """Fetch a single URL with retries.
@@ -102,7 +135,7 @@ class AsyncCrawler(BaseCrawler):
                 cookies = {**self.config.cookies, **request.cookies}
 
                 # Prepare proxy
-                proxy = self.config.proxy
+                proxy = self._proxies.rotate_proxy()
 
                 # Make the request
                 async with self._semaphore:
@@ -113,14 +146,15 @@ class AsyncCrawler(BaseCrawler):
                         data=request.data,
                         params=request.params,
                         cookies=cookies,
-                        proxy=proxy,
+                        proxy=proxy.url,
                         allow_redirects=self.config.follow_redirects,
                         max_redirects=self.config.max_redirects,
                     ) as response:
+                    
                         content = await response.read()
                         text = await response.text(errors="replace")
 
-                        return CrawlResponse(
+                        crawl_response = CrawlResponse(
                             url=str(response.url),
                             status=response.status,
                             headers=dict(response.headers),
@@ -129,6 +163,21 @@ class AsyncCrawler(BaseCrawler):
                             encoding=response.charset,
                             metadata=request.metadata,
                         )
+                        
+                        # Apply extraction if configured
+                        extraction_type = request.extraction_strategy or self.config.extraction_strategy
+                        if extraction_type:
+                            extractor = self._get_extractor(extraction_type)
+                            if extractor:
+                                raw_response = RawResponse(
+                                    url=crawl_response.url,
+                                    text=crawl_response.text,
+                                    status=crawl_response.status,
+                                )
+
+                                crawl_response.extracted = extractor.extract(raw_response)
+                        
+                        return crawl_response
 
             except asyncio.TimeoutError as e:
                 last_error = f"Timeout error: {e}"
@@ -164,30 +213,6 @@ class AsyncCrawler(BaseCrawler):
             error=last_error,
         )
 
-    async def fetch_many(
-        self, requests: list[CrawlRequest]
-    ) -> AsyncGenerator[CrawlResponse, None]:
-        """Fetch multiple URLs concurrently.
-
-        Args:
-            requests: List of crawl requests to execute
-
-        Yields:
-            Crawl responses as they complete
-        """
-        if not self._session:
-            raise RuntimeError(
-                "Crawler not set up. Use async context manager or call setup()"
-            )
-
-        # Create tasks for all requests
-        tasks = [asyncio.create_task(self.fetch(request)) for request in requests]
-
-        # Yield responses as they complete
-        for coro in asyncio.as_completed(tasks):
-            response = await coro
-            yield response
-
     async def fetch_all(self, requests: list[CrawlRequest]) -> list[CrawlResponse]:
         """Fetch multiple URLs and return all responses.
 
@@ -197,7 +222,5 @@ class AsyncCrawler(BaseCrawler):
         Returns:
             List of all crawl responses
         """
-
-        task = [asyncio.create_task(self.fetch(request)) for request in requests]
-
-        return [response.result() for response in task]
+        tasks = [asyncio.create_task(self.fetch(request)) for request in requests]
+        return await asyncio.gather(*tasks)

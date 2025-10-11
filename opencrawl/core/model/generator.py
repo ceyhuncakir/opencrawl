@@ -4,24 +4,28 @@ This module provides a clean interface for generating text using vLLM models
 with extensive sampling parameter control.
 """
 
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from .base import BaseVLLM
-from .structures import GenerationConfig, GenerationOutput, VLLMConfig
+from .structures import GenerationConfig, GenerationOutput, ModelConfig
+
+# Type alias for chat messages
+ChatMessage = dict[str, str]
+Conversation = list[ChatMessage]
 
 
-class VLLMGenerator:
-    """Text generator using vLLM for high-performance inference.
+class Model:
+    """Text generator using model for high-performance inference.
 
-    This class provides a clean interface for generating text with vLLM models.
+    This class provides a clean interface for generating text with models.
     It handles both single and batch generation with flexible configuration.
 
     Example:
-        >>> model_config = VLLMConfig(
+        >>> model_config = ModelConfig(
         ...     model="meta-llama/Llama-2-7b-hf",
         ...     tensor_parallel_size=1
         ... )
-        >>> generator = VLLMGenerator(model_config)
+        >>> generator = Model(model_config)
         >>>
         >>> gen_config = GenerationConfig(
         ...     temperature=0.7,
@@ -35,52 +39,46 @@ class VLLMGenerator:
 
     def __init__(
         self,
-        model_config: VLLMConfig,
+        model_config: ModelConfig,
         default_gen_config: Optional[GenerationConfig] = None,
-    ):
+    ) -> None:
         """Initialize the generator with model configuration.
 
         Args:
-            model_config: Configuration for vLLM model initialization.
+            model_config: Configuration for model initialization.
             default_gen_config: Default generation configuration (optional).
         """
         self.base_model = BaseVLLM(model_config)
         self.default_gen_config = default_gen_config or GenerationConfig()
 
-    def generate(
+    def chat(
         self,
-        prompt: str,
-        gen_config: Optional[GenerationConfig] = None,
-        **kwargs: Any,
-    ) -> GenerationOutput:
-        """Generate text from a single prompt.
-
-        Args:
-            prompt: The input text prompt.
-            gen_config: Generation configuration (uses default if None).
-            **kwargs: Additional generation parameters to override config.
-
-        Returns:
-            GenerationOutput with the generated text and metadata.
-        """
-        outputs = self.batch_generate([prompt], gen_config, **kwargs)
-        return outputs[0]
-
-    def batch_generate(
-        self,
-        prompts: list[str],
+        messages: Union[Conversation, list[Conversation]],
         gen_config: Optional[GenerationConfig] = None,
         **kwargs: Any,
     ) -> list[GenerationOutput]:
-        """Generate text from multiple prompts in batch.
+        """Generate text from chat conversations using chat templates.
+
+        This method uses vLLM's chat API which automatically formats messages
+        using the model's default chat template or a custom template if provided.
 
         Args:
-            prompts: List of input text prompts.
+            messages: Either a single conversation or a list of conversations.
+                Each conversation is a list of message dicts with 'role' and 'content'.
+                Example: [{"role": "user", "content": "Hello"}]
             gen_config: Generation configuration (uses default if None).
             **kwargs: Additional generation parameters to override config.
 
         Returns:
-            List of GenerationOutput objects for each prompt.
+            List of GenerationOutput objects for each conversation.
+
+        Example:
+            >>> conversation = [
+            ...     {"role": "system", "content": "You are a helpful assistant"},
+            ...     {"role": "user", "content": "Hello"}
+            ... ]
+            >>> outputs = model.chat(conversation)
+            >>> print(outputs[0].text)
         """
         config = gen_config or self.default_gen_config
 
@@ -96,8 +94,18 @@ class VLLMGenerator:
 
         sampling_params = config.to_sampling_params()
 
-        # Generate with vLLM
-        outputs = self.base_model.model.generate(prompts, sampling_params)
+        # Prepare kwargs for llm.chat()
+        chat_kwargs = {
+            "sampling_params": sampling_params,
+            "use_tqdm": config.use_tqdm,
+        }
+        
+        # Add chat_template if provided
+        if config.chat_template is not None:
+            chat_kwargs["chat_template"] = config.chat_template
+
+        # Generate with vLLM chat API
+        outputs = self.base_model.model.chat(messages, **chat_kwargs)
 
         # Parse outputs
         results = []
@@ -117,46 +125,6 @@ class VLLMGenerator:
 
         return results
 
-    def stream_generate(
-        self,
-        prompt: str,
-        gen_config: Optional[GenerationConfig] = None,
-        **kwargs: Any,
-    ):
-        """Generate text with streaming output (placeholder for future implementation).
-
-        Note: vLLM does not natively support streaming through the offline API.
-        Consider using vLLM's OpenAI-compatible server for streaming.
-
-        Args:
-            prompt: The input text prompt.
-            gen_config: Generation configuration (uses default if None).
-            **kwargs: Additional generation parameters to override config.
-
-        Raises:
-            NotImplementedError: Streaming is not yet implemented.
-        """
-        raise NotImplementedError(
-            "Streaming is not supported with vLLM offline inference API. "
-            "Use vLLM's OpenAI-compatible server for streaming support."
-        )
-
-    def update_default_config(self, gen_config: GenerationConfig) -> None:
-        """Update the default generation configuration.
-
-        Args:
-            gen_config: New default generation configuration.
-        """
-        self.default_gen_config = gen_config
-
-    def reload_model(self, model_config: VLLMConfig) -> None:
-        """Reload the underlying model with new configuration.
-
-        Args:
-            model_config: New model configuration.
-        """
-        self.base_model.reload_model(model_config)
-
     def __repr__(self) -> str:
         """String representation of the generator."""
-        return f"VLLMGenerator(model={self.base_model.config.model})"
+        return f"Model(model={self.base_model.config.model})"

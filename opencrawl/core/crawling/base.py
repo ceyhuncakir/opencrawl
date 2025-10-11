@@ -1,7 +1,6 @@
 """Base classes for web crawling."""
 
 from abc import ABC, abstractmethod
-from typing import AsyncGenerator
 
 from .structures import CrawlerConfig, CrawlRequest, CrawlResponse
 
@@ -41,20 +40,6 @@ class BaseCrawler(ABC):
 
         Returns:
             The crawl response
-        """
-        pass
-
-    @abstractmethod
-    async def fetch_many(
-        self, requests: list[CrawlRequest]
-    ) -> AsyncGenerator[CrawlResponse, None]:
-        """Fetch multiple URLs concurrently.
-
-        Args:
-            requests: List of crawl requests to execute
-
-        Yields:
-            Crawl responses as they complete
         """
         pass
 

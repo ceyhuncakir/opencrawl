@@ -1,12 +1,13 @@
-"""Model serving and generation using vLLM."""
+"""Model serving and generations."""
 
-from .base import BaseVLLM, VLLMConfig
-from .generator import GenerationConfig, GenerationOutput, VLLMGenerator
+from .structures import ModelConfig, GenerationConfig, GenerationOutput
+from .generator import Model, ChatMessage, Conversation
 
 __all__ = [
-    "BaseVLLM",
-    "VLLMConfig",
-    "VLLMGenerator",
+    "ModelConfig",
+    "Model",
     "GenerationConfig",
     "GenerationOutput",
+    "ChatMessage",
+    "Conversation",
 ]

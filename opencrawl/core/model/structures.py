@@ -5,8 +5,8 @@ from vllm import SamplingParams
 
 
 @dataclass
-class VLLMConfig:
-    """Configuration for vLLM model initialization and serving.
+class ModelConfig:
+    """Configuration for model initialization and serving.
 
     Attributes:
         model: The name or path of a HuggingFace Transformers model.
@@ -16,10 +16,11 @@ class VLLMConfig:
         download_dir: Directory to download and load the weights.
         gpu_memory_utilization: Fraction of GPU memory to use (0.0 to 1.0).
         max_model_len: Maximum sequence length supported by the model.
+        max_num_batched_tokens: Maximum number of tokens to be processed in a single iteration.
         enforce_eager: Whether to enforce eager execution (disable CUDA graphs).
         swap_space: CPU swap space size (GiB) per GPU.
         seed: Random seed for reproducibility.
-        **kwargs: Additional parameters for vllm.LLM initialization.
+        **kwargs: Additional parameters for model initialization.
     """
 
     model: str
@@ -29,6 +30,7 @@ class VLLMConfig:
     download_dir: Optional[str] = None
     gpu_memory_utilization: float = 0.9
     max_model_len: Optional[int] = None
+    max_num_batched_tokens: Optional[int] = None
     enforce_eager: bool = False
     swap_space: int = 4
     seed: int = 0
@@ -37,7 +39,7 @@ class VLLMConfig:
 
 @dataclass
 class GenerationConfig:
-    """Configuration for text generation with vLLM.
+    """Configuration for text generation.
 
     Attributes:
         temperature: Float that controls the randomness of sampling (0.0 to 2.0).
@@ -55,6 +57,8 @@ class GenerationConfig:
         min_tokens: Minimum number of tokens to generate before stopping.
         skip_special_tokens: Whether to skip special tokens in the output.
         spaces_between_special_tokens: Whether to add spaces between special tokens.
+        chat_template: Optional Jinja2 chat template for formatting chat messages.
+        use_tqdm: Whether to use tqdm progress bar during generation.
         **kwargs: Additional parameters for SamplingParams.
     """
 
@@ -73,10 +77,12 @@ class GenerationConfig:
     min_tokens: int = 0
     skip_special_tokens: bool = True
     spaces_between_special_tokens: bool = True
+    chat_template: Optional[str] = None
+    use_tqdm: bool = False
     kwargs: dict[str, Any] = field(default_factory=dict)
 
     def to_sampling_params(self) -> SamplingParams:
-        """Convert to vLLM SamplingParams object.
+        """Convert to SamplingParams object.
 
         Returns:
             SamplingParams instance with configured parameters.
@@ -120,3 +126,4 @@ class GenerationOutput:
     completion_tokens: int
     total_tokens: int
     logprobs: Optional[Any] = None
+
