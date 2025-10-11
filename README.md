@@ -2,7 +2,7 @@
   <img src="images/banner.svg" alt="OpenCrawl Banner" width="100%">
 </div>
 
-<div align="center">
+<div align="center" style="margin-top: 20px;">
 
 [![GitHub stars](https://img.shields.io/github/stars/ceyhuncakir/opencrawl?style=social)](https://github.com/ceyhuncakir/opencrawl/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ceyhuncakir/opencrawl?style=social)](https://github.com/ceyhuncakir/opencrawl/network/members)
