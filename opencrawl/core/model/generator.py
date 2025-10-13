@@ -4,7 +4,9 @@ This module provides a clean interface for generating text using vLLM models
 with extensive sampling parameter control.
 """
 
-from typing import Any, Optional, Union
+from typing import Any, Union
+
+from transformers import AutoProcessor
 
 from .base import BaseVLLM
 from .structures import GenerationConfig, GenerationOutput, ModelConfig
@@ -40,7 +42,6 @@ class Model:
     def __init__(
         self,
         model_config: ModelConfig,
-        default_gen_config: Optional[GenerationConfig] = None,
     ) -> None:
         """Initialize the generator with model configuration.
 
@@ -49,12 +50,11 @@ class Model:
             default_gen_config: Default generation configuration (optional).
         """
         self.base_model = BaseVLLM(model_config)
-        self.default_gen_config = default_gen_config or GenerationConfig()
+        self.default_gen_config = model_config.gen_config or GenerationConfig()
 
     def chat(
         self,
         messages: Union[Conversation, list[Conversation]],
-        gen_config: Optional[GenerationConfig] = None,
         **kwargs: Any,
     ) -> list[GenerationOutput]:
         """Generate text from chat conversations using chat templates.
@@ -66,7 +66,6 @@ class Model:
             messages: Either a single conversation or a list of conversations.
                 Each conversation is a list of message dicts with 'role' and 'content'.
                 Example: [{"role": "user", "content": "Hello"}]
-            gen_config: Generation configuration (uses default if None).
             **kwargs: Additional generation parameters to override config.
 
         Returns:
@@ -80,7 +79,7 @@ class Model:
             >>> outputs = model.chat(conversation)
             >>> print(outputs[0].text)
         """
-        config = gen_config or self.default_gen_config
+        config = self.default_gen_config
 
         # Override config with kwargs if provided
         if kwargs:
@@ -100,7 +99,7 @@ class Model:
             "use_tqdm": config.use_tqdm,
         }
         
-        # Add chat_template if provided
+        # Add chat_template - use custom one or provide a simple default
         if config.chat_template is not None:
             chat_kwargs["chat_template"] = config.chat_template
 

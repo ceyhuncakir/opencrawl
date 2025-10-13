@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -34,6 +36,7 @@ class ModelConfig:
     enforce_eager: bool = False
     swap_space: int = 4
     seed: int = 0
+    gen_config: Optional[GenerationConfig] = None
     kwargs: dict[str, Any] = field(default_factory=dict)
 
 

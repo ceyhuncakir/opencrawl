@@ -2,7 +2,6 @@ from typing import List, Optional
 
 from opencrawl import (
     Model,
-    GenerationConfig,
     CrawlerConfig,
     ModelConfig,
     AsyncCrawler,
@@ -57,14 +56,12 @@ class Spider:
         self,
         requests: List[CrawlRequest],
         task: Optional[str] = None,
-        gen_config: Optional[GenerationConfig] = None,
     ) -> List[SpiderOutput]:
         """Crawl URLs and process content with LLM.
 
         Args:
             requests: List of URLs to crawl.
             task: Task definition for the LLM (system prompt).
-            gen_config: Generation configuration for the LLM.
 
         Returns:
             List of SpiderOutput objects with URL, content, analysis, and token count.
@@ -78,7 +75,7 @@ class Spider:
         conversations = self._build_conversation(crawl_data, task)
 
         # Process with LLM
-        outputs = self._generator.chat(conversations, gen_config)
+        outputs = self._generator.chat(conversations)
 
         # Combine results
         return [
