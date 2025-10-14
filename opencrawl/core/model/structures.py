@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 from vllm import SamplingParams
-
+from vllm.sampling_params import StructuredOutputsParams
+from pydantic import BaseModel
 
 @dataclass
 class ModelConfig:
@@ -82,6 +83,7 @@ class GenerationConfig:
     spaces_between_special_tokens: bool = True
     chat_template: Optional[str] = None
     use_tqdm: bool = False
+    structured_outputs: Optional[Type[BaseModel]] = None
     kwargs: dict[str, Any] = field(default_factory=dict)
 
     def to_sampling_params(self) -> SamplingParams:
@@ -94,6 +96,7 @@ class GenerationConfig:
             temperature=self.temperature,
             top_p=self.top_p,
             top_k=self.top_k,
+            structured_outputs=StructuredOutputsParams(self.structured_outputs.model_json_schema()),
             max_tokens=self.max_tokens,
             n=self.n,
             best_of=self.best_of,

@@ -1,5 +1,9 @@
 from typing import List, Optional
 
+import json
+import os
+from pathlib import Path
+
 from opencrawl import (
     Model,
     CrawlerConfig,
@@ -16,9 +20,11 @@ class Spider:
         self,
         crawl_config: CrawlerConfig = None,
         model_config: ModelConfig = None,
+        output_path: Optional[str] = None,
     ) -> None:
         self._crawl_config = crawl_config
         self._model_config = model_config
+        self._output_path = output_path
 
         if model_config:
             self._generator = Model(model_config)
@@ -52,6 +58,26 @@ class Spider:
 
         return conversations
 
+    def _save_to_json(self, spider_outputs: List[SpiderOutput]) -> None:
+        """Save spider outputs to JSON file.
+        
+        Args:
+            spider_outputs: List of SpiderOutput objects to save.
+        """
+        if not self._output_path:
+            return
+        
+        # Create parent directories if they don't exist
+        output_path = Path(self._output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Convert Pydantic models to dictionaries
+        outputs_dict = [output.model_dump() for output in spider_outputs]
+        
+        # Write to JSON file
+        with open(self._output_path, "w", encoding="utf-8") as f:
+            json.dump(outputs_dict, f, indent=2, ensure_ascii=False)
+
     async def crawl(
         self,
         requests: List[CrawlRequest],
@@ -77,11 +103,15 @@ class Spider:
         # Process with LLM
         outputs = self._generator.chat(conversations)
 
-        # Combine results
-        return [
+        spider_outputs = [
             SpiderOutput(
                 url=response.url,
-                content=outputs[i].text
+                content=outputs[i]
             )
             for i, response in enumerate(crawl_data)
         ]
+
+        # Save to JSON if output path is specified
+        self._save_to_json(spider_outputs)
+
+        return spider_outputs

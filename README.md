@@ -19,3 +19,6 @@
 </div>
 
 # opencrawl
+
+## Contributions
+This project is in its very early stages, but any contributions towards the project is highgly appreciatied. Just open a PR and i will have an look at it, and if its fits the projects vision, i will gladly merge it in.

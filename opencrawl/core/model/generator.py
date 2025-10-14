@@ -5,6 +5,7 @@ with extensive sampling parameter control.
 """
 
 from typing import Any, Union
+import json
 
 from transformers import AutoProcessor
 
@@ -54,8 +55,7 @@ class Model:
 
     def chat(
         self,
-        messages: Union[Conversation, list[Conversation]],
-        **kwargs: Any,
+        messages: Union[Conversation, list[Conversation]]
     ) -> list[GenerationOutput]:
         """Generate text from chat conversations using chat templates.
 
@@ -81,46 +81,38 @@ class Model:
         """
         config = self.default_gen_config
 
-        # Override config with kwargs if provided
-        if kwargs:
-            config_dict = {
-                k: v
-                for k, v in config.__dict__.items()
-                if not k.startswith("_") and k != "kwargs"
-            }
-            config_dict.update(kwargs)
-            config = GenerationConfig(**config_dict)
-
-        sampling_params = config.to_sampling_params()
-
         # Prepare kwargs for llm.chat()
         chat_kwargs = {
-            "sampling_params": sampling_params,
+            "sampling_params": config.to_sampling_params(),
             "use_tqdm": config.use_tqdm,
         }
-        
-        # Add chat_template - use custom one or provide a simple default
-        if config.chat_template is not None:
-            chat_kwargs["chat_template"] = config.chat_template
 
         # Generate with vLLM chat API
         outputs = self.base_model.model.chat(messages, **chat_kwargs)
 
         # Parse outputs
         results = []
+
         for output in outputs:
             # Get the first (or best) completion
             completion = output.outputs[0]
 
-            result = GenerationOutput(
-                text=completion.text,
-                finish_reason=completion.finish_reason,
-                prompt_tokens=len(output.prompt_token_ids),
-                completion_tokens=len(completion.token_ids),
-                total_tokens=len(output.prompt_token_ids) + len(completion.token_ids),
-                logprobs=completion.logprobs if config.logprobs else None,
-            )
-            results.append(result)
+            if config.structured_outputs:
+                # Parse JSON and validate against the Pydantic model
+                parsed_data = json.loads(completion.text)
+                validated_model = config.structured_outputs.model_validate(parsed_data)
+                results.append(validated_model)
+            else:
+                # Return standard GenerationOutput
+                result = GenerationOutput(
+                    text=completion.text,
+                    finish_reason=completion.finish_reason,
+                    prompt_tokens=len(output.prompt_token_ids),
+                    completion_tokens=len(completion.token_ids),
+                    total_tokens=len(output.prompt_token_ids) + len(completion.token_ids),
+                    logprobs=completion.logprobs if config.logprobs else None,
+                )
+                results.append(result)
 
         return results
 

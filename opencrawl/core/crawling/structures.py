@@ -40,7 +40,7 @@ class CrawlerConfig:
     verbose: bool = False
     extraction_strategy: Optional[ExtractionType] = None
     extraction_config: Optional[ExtractionConfig] = None
-
+    
     def __post_init__(self):
         """Set default user agent if not provided in headers."""
         if "User-Agent" not in self.headers:

@@ -1,18 +1,6 @@
-"""Core data structures for OpenCrawl."""
+from typing import Any
+from pydantic import BaseModel
 
-from dataclasses import dataclass
-
-
-@dataclass
-class SpiderOutput:
-    """Output from a Spider crawl operation.
-    
-    Attributes:
-        url: The crawled URL
-        content: The extracted or raw content
-        analysis: LLM analysis of the content
-        tokens: Total tokens used in analysis
-    """
-    
+class SpiderOutput(BaseModel):
     url: str
-    content: str
+    content: Any  # Can be str (GenerationOutput.text) or any Pydantic BaseModel (structured outputs)
