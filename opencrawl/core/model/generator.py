@@ -4,17 +4,13 @@ This module provides a clean interface for generating text using vLLM models
 with extensive sampling parameter control.
 """
 
-from typing import Any, Union
+from typing import Any, Union, List
 import json
 
 from transformers import AutoProcessor
 
 from .base import BaseVLLM
 from .structures import GenerationConfig, GenerationOutput, ModelConfig
-
-# Type alias for chat messages
-ChatMessage = dict[str, str]
-Conversation = list[ChatMessage]
 
 
 class Model:
@@ -55,31 +51,51 @@ class Model:
 
     def chat(
         self,
-        messages: Union[Conversation, list[Conversation]]
-    ) -> list[GenerationOutput]:
+        messages: Union[List[dict[str, str]], List[List[dict[str, str]]]]
+    ) -> List[GenerationOutput]:
         """Generate text from chat conversations using chat templates.
 
         This method uses vLLM's chat API which automatically formats messages
         using the model's default chat template or a custom template if provided.
+        
+        Supports both single and batch generation - pass a list of conversations
+        for efficient batch processing.
 
         Args:
             messages: Either a single conversation or a list of conversations.
                 Each conversation is a list of message dicts with 'role' and 'content'.
                 Example: [{"role": "user", "content": "Hello"}]
-            **kwargs: Additional generation parameters to override config.
+                For batch: [[{"role": "user", "content": "Hello"}], [{"role": "user", "content": "Hi"}]]
 
         Returns:
             List of GenerationOutput objects for each conversation.
+            Always returns a list, even for single inputs.
 
         Example:
+            >>> # Single conversation
             >>> conversation = [
             ...     {"role": "system", "content": "You are a helpful assistant"},
             ...     {"role": "user", "content": "Hello"}
             ... ]
             >>> outputs = model.chat(conversation)
             >>> print(outputs[0].text)
+            >>>
+            >>> # Batch generation (more efficient)
+            >>> conversations = [
+            ...     [{"role": "user", "content": "Hello"}],
+            ...     [{"role": "user", "content": "Hi there"}]
+            ... ]
+            >>> outputs = model.chat(conversations)
+            >>> for output in outputs:
+            ...     print(output.text)
         """
         config = self.default_gen_config
+
+        # Normalize input: detect if single conversation or batch
+        # A single conversation is a list of dicts with 'role' and 'content'
+        # A batch is a list of conversations (list of lists)
+        is_single = len(messages) > 0 and isinstance(messages[0], dict)
+        batch_messages = [messages] if is_single else messages
 
         # Prepare kwargs for llm.chat()
         chat_kwargs = {
@@ -87,10 +103,10 @@ class Model:
             "use_tqdm": config.use_tqdm,
         }
 
-        # Generate with vLLM chat API
-        outputs = self.base_model.model.chat(messages, **chat_kwargs)
+        # Generate with vLLM chat API (batch generation)
+        outputs = self.base_model.model.chat(batch_messages, **chat_kwargs)
 
-        # Parse outputs
+        # Parse outputs efficiently
         results = []
 
         for output in outputs:

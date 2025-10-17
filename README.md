@@ -33,7 +33,6 @@ uv add opencrawl
 ```
 
 ## Examples
-
 ### Basic Crawling
 Simple web crawling with markdown extraction:
 

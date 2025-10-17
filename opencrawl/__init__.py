@@ -36,8 +36,6 @@ from opencrawl.core.model import (
     ModelConfig,
     GenerationConfig,
     GenerationOutput,
-    ChatMessage,
-    Conversation,
 )
 from opencrawl.spider import Spider
 from opencrawl.core import SpiderOutput
@@ -59,8 +57,6 @@ __all__ = [
     "ModelConfig",
     "GenerationConfig",
     "GenerationOutput",
-    "ChatMessage",
-    "Conversation",
     # Spider
     "Spider",
     "SpiderOutput",
