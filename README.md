@@ -32,6 +32,99 @@ With uv
 uv add opencrawl
 ```
 
+# Features
+
+## Crawler Features
+
+<details>
+<summary><b>High-Performance Web Crawling</b></summary>
+
+- **Async Architecture**: Built on `aiohttp` and `uvloop` for maximum performance
+- **Concurrent Requests**: Configurable concurrency limits with semaphore-based control
+- **Smart Retry Logic**: Automatic retries with exponential backoff for failed requests
+- **Connection Management**: Efficient connection pooling and timeout control
+
+</details>
+
+<details>
+<summary><b>Proxy Support</b></summary>
+
+- **Proxy Rotation**: Automatic proxy rotation from a pool of proxies
+- **Proxy Validation**: Built-in proxy health checking against test endpoints
+- **Multiple Input Methods**: Load proxies from file or comma-separated string
+- **Proxy Filtering**: Automatic removal of invalid proxies
+
+</details>
+
+<details>
+<summary><b>Flexible Configuration</b></summary>
+
+- **Custom Headers & Cookies**: Set default and per-request headers/cookies
+- **SSL Control**: Enable/disable SSL verification as needed
+- **Redirect Handling**: Configurable redirect following with max redirect limits
+- **User Agent**: Customizable user agent strings
+- **Request Timeouts**: Fine-grained timeout control for each request
+
+</details>
+
+<details>
+<summary><b>Content Extraction</b></summary>
+
+- **Multiple Extraction Types**:
+  - **HTML**: Raw HTML extraction with cleaning options
+  - **Content**: Clean text content extraction
+  - **Markdown**: Convert HTML to markdown format
+- **Smart Cleaning**: Configurable removal of scripts, styles, navigation, headers, footers
+- **Metadata Extraction**: Automatic extraction of page metadata (title, description, keywords)
+- **Link & Image Preservation**: Optional extraction of links and image URLs
+- **Minimum Text Filtering**: Filter out elements below a minimum text length
+
+</details>
+
+## Model Features
+
+<details>
+<summary><b>vLLM-Powered Inference</b></summary>
+
+- **High-Performance**: Built on vLLM for fast inference with open-source models
+- **Multi-GPU Support**: Tensor parallel execution across multiple GPUs
+- **Memory Management**: Configurable GPU memory utilization and swap space
+- **Batch Generation**: Efficient batch processing for multiple requests
+
+</details>
+
+<details>
+<summary><b>Model Configuration</b></summary>
+
+- **Flexible Model Loading**: Support for any HuggingFace model
+- **Data Type Options**: Choose between auto, float16, bfloat16, and float32
+- **Custom Download**: Specify custom download directories for models
+- **Sequence Length Control**: Configure maximum model and batch token lengths
+- **Trust Remote Code**: Option to trust remote code for specialized models
+
+</details>
+
+<details>
+<summary><b>Advanced Generation Control</b></summary>
+
+- **Temperature & Sampling**: Fine-tune creativity with temperature, top_p, and top_k
+- **Token Control**: Set min/max tokens, stop sequences, and EOS handling
+- **Penalties**: Apply presence, frequency, and repetition penalties
+- **Multiple Outputs**: Generate n outputs and select best of m candidates
+- **Log Probabilities**: Access token-level log probabilities for analysis
+
+</details>
+
+<details>
+<summary><b>Chat & Structured Outputs</b></summary>
+
+- **Chat Templates**: Built-in support for chat-style interactions
+- **Structured Outputs**: Extract structured data using Pydantic models
+- **JSON Validation**: Automatic parsing and validation of structured responses
+- **Batch Chat**: Efficient batch processing of multiple conversations
+
+</details>
+
 ## Examples
 ### Basic Crawling
 Simple web crawling with markdown extraction:
