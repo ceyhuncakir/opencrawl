@@ -39,7 +39,7 @@ jobs:
 
     environment:
       name: testpypi
-      url: https://test.pypi.org/p/opencrawl
+      url: https://test.pypi.org/p/opencrawll
 
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
@@ -65,7 +65,7 @@ jobs:
     
     environment:
       name: pypi
-      url: https://pypi.org/p/opencrawl
+      url: https://pypi.org/p/opencrawll
     
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
