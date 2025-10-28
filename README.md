@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="images/banner.svg" alt="OpenCrawl Banner" width="100%">
+  <img src="https://raw.githubusercontent.com/ceyhuncakir/opencrawl/main/images/banner.svg" alt="OpenCrawl Banner" width="100%">
 </div>
 
 <div align="center" style="margin-top: 20px;">
