@@ -11,9 +11,9 @@
 
 <div align="center">
 
-[![PyPI version](https://img.shields.io/pypi/v/opencrawl?color=brightgreen&label=pypi%20package)](https://pypi.org/project/opencrawll/)
-[![Python versions](https://img.shields.io/pypi/pyversions/opencrawl)](https://pypi.org/project/opencrawll/)
-[![Downloads](https://img.shields.io/pypi/dm/opencrawl?color=blue&label=downloads/month)](https://pypi.org/project/opencrawll/)
+[![PyPI version](https://img.shields.io/pypi/v/opencrawll?color=brightgreen&label=pypi%20package)](https://pypi.org/project/opencrawll/)
+[![Python versions](https://img.shields.io/pypi/pyversions/opencrawll)](https://pypi.org/project/opencrawll/)
+[![Downloads](https://img.shields.io/pypi/dm/opencrawll?color=blue&label=downloads/month)](https://pypi.org/project/opencrawll/)
 [![Sponsors](https://img.shields.io/github/sponsors/ceyhuncakir?color=pink&logo=github-sponsors)](https://github.com/sponsors/ceyhuncakir)
 
 </div>
