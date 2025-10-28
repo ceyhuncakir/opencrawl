@@ -92,9 +92,9 @@ uv add opencrawl
 ## Model Features
 
 <details>
-<summary><b>Transformers-Powered Inference</b></summary>
+<summary><b>VLLM-Powered Inference</b></summary>
 
-- **Flexible & Easy**: Built on HuggingFace Transformers for easy model integration
+- **Flexible & Easy**: Built on VLLM for easy model integration
 - **Multi-GPU Support**: Automatic device mapping across multiple GPUs
 - **Cross-Platform**: Works on Linux, macOS (MPS), and CPU
 - **Batch Generation**: Efficient batch processing for multiple requests
