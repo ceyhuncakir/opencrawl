@@ -1,3 +1,8 @@
+"""Structures for model configuration and generation.
+
+This module contains dataclasses for model configuration and generation parameters.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -63,6 +68,7 @@ class GenerationConfig:
         spaces_between_special_tokens: Whether to add spaces between special tokens.
         chat_template: Optional Jinja2 chat template for formatting chat messages.
         use_tqdm: Whether to use tqdm progress bar during generation.
+        structured_outputs: Pydantic model for structured outputs.
         **kwargs: Additional parameters for SamplingParams.
     """
 

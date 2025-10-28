@@ -15,26 +15,12 @@ class BaseVLLM:
     This class handles the initialization and lifecycle management of vLLM models.
     It provides a clean interface for serving models dynamically.
 
-    Example:
-        >>> config = VLLMConfig(
-        ...     model="meta-llama/Llama-2-7b-hf",
-        ...     tensor_parallel_size=1,
-        ...     dtype="float16"
-        ... )
-        >>> base_model = BaseVLLM(config)
-        >>> # Model is now ready for generation
+    Attributes:
+        config: ModelConfig instance with model parameters.
     """
 
     def __init__(self, config: ModelConfig):
-        """Initialize the vLLM model with given configuration.
 
-        Args:
-            config: VLLMConfig instance with model parameters.
-
-        Raises:
-            ImportError: If vLLM is not installed.
-            ValueError: If configuration is invalid.
-        """
         self.config = config
         self._model: Optional[VLLMModel] = None
         self._initialize_model()
@@ -42,11 +28,17 @@ class BaseVLLM:
     def _initialize_model(self) -> None:
         """Initialize the vLLM model instance.
 
+        Args:
+            config: ModelConfig instance with model parameters.
+
+        Returns:
+            None
+
         Raises:
             ImportError: If vLLM package is not available.
+            ValueError: If configuration is invalid.
         """
         try:
-            # Build initialization parameters
             init_params = {
                 "model": self.config.model,
                 "tensor_parallel_size": self.config.tensor_parallel_size,
@@ -58,7 +50,6 @@ class BaseVLLM:
                 "seed": self.config.seed,
             }
             
-            # Add optional parameters if specified
             if self.config.download_dir is not None:
                 init_params["download_dir"] = self.config.download_dir
             if self.config.max_model_len is not None:
@@ -66,7 +57,6 @@ class BaseVLLM:
             if self.config.max_num_batched_tokens is not None:
                 init_params["max_num_batched_tokens"] = self.config.max_num_batched_tokens
             
-            # Add any additional kwargs
             init_params.update(self.config.kwargs)
             
             self._model = VLLMModel(**init_params)
@@ -79,6 +69,9 @@ class BaseVLLM:
     @property
     def model(self) -> VLLMModel:
         """Get the underlying vLLM model instance.
+
+        Args:
+            None
 
         Returns:
             The initialized vLLM model.
@@ -93,6 +86,9 @@ class BaseVLLM:
     def is_ready(self) -> bool:
         """Check if the model is ready for inference.
 
+        Args:
+            None
+
         Returns:
             True if model is initialized and ready.
         """
@@ -103,6 +99,9 @@ class BaseVLLM:
 
         Args:
             new_config: Optional new configuration. If None, uses current config.
+
+        Returns:
+            None
         """
         if new_config is not None:
             self.config = new_config
@@ -111,7 +110,11 @@ class BaseVLLM:
         self._initialize_model()
 
     def __repr__(self) -> str:
-        """String representation of the model instance."""
+        """String representation of the model instance.
+
+        Returns:
+            String representation of the model instance.
+        """
         return (
             f"BaseVLLM(model={self.config.model}, "
             f"tensor_parallel_size={self.config.tensor_parallel_size}, "

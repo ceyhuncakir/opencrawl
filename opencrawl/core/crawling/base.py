@@ -9,6 +9,9 @@ class BaseCrawler(ABC):
     """Abstract base class for web crawlers.
 
     Provides a common interface for different crawler implementations.
+
+    Attributes:
+        config: Crawler configuration.
     """
 
     def __init__(self, config: CrawlerConfig | None = None):

@@ -13,14 +13,12 @@ class BaseExtractor(ABC):
     """Abstract base class for content extractors.
     
     Provides common functionality for different extraction strategies.
+
+    Attributes:
+        config: Extraction configuration.
     """
     
     def __init__(self, config: Optional[ExtractionConfig] = None):
-        """Initialize the extractor.
-        
-        Args:
-            config: Extraction configuration. If None, uses default config.
-        """
         self.config = config or ExtractionConfig()
     
     @abstractmethod
@@ -56,7 +54,6 @@ class BaseExtractor(ABC):
         Returns:
             Cleaned HTMLParser object
         """
-        # Remove scripts
         if self.config.remove_scripts:
             [node.decompose() for node in tree.css("script")]
         

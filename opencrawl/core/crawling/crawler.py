@@ -1,7 +1,6 @@
 """High-performance async web crawler using aiohttp and uvloop."""
 
 import asyncio
-import logging
 from typing import Optional
 
 import aiohttp
@@ -19,47 +18,32 @@ from .extractor import (
     RawResponse,
 )
 
-logger = logging.getLogger(__name__)
-
-
 class AsyncCrawler(BaseCrawler):
     """High-performance async web crawler using aiohttp.
 
-    Features:
-        - Async/await with aiohttp for optimal performance
-        - Configurable concurrency limits
-        - Automatic retries with exponential backoff
-        - Proxy support
-        - Custom headers and cookies
-        - SSL verification control
-
-    Example:
-        >>> config = CrawlerConfig(max_concurrent_requests=20)
-        >>> async with AsyncCrawler(config) as crawler:
-        ...     request = CrawlRequest(url="https://example.com")
-        ...     response = await crawler.fetch(request)
-        ...     print(response.text)
+    Attributes:
+        config: Crawler configuration.
     """
 
     def __init__(self, config: CrawlerConfig | None = None):
-        """Initialize the crawler.
-
-        Args:
-            config: Crawler configuration. If None, uses default config.
-        """
         super().__init__(config)
         self._rate_limiter = None
         self._proxies = Proxies(self.config.proxies)
         self._extractors = self._init_extractors()
 
     async def setup(self) -> None:
-        """Set up the crawler session and resources."""
+        """Set up the crawler session and resources.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
-        # Create timeout configuration
         timeout = aiohttp.ClientTimeout(total=self.config.request_timeout)
 
-        # Create connector with SSL settings
         connector = aiohttp.TCPConnector(
             limit=self.config.max_concurrent_requests,
             verify_ssl=self.config.verify_ssl,
@@ -77,7 +61,14 @@ class AsyncCrawler(BaseCrawler):
         self._semaphore = asyncio.Semaphore(self.config.max_concurrent_requests)
 
     async def cleanup(self) -> None:
-        """Clean up the crawler session and resources."""
+        """Clean up the crawler session and resources.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         if self._session:
             await self._session.close()
             self._session = None
@@ -86,6 +77,9 @@ class AsyncCrawler(BaseCrawler):
     
     def _init_extractors(self) -> dict[ExtractionType, BaseExtractor]:
         """Initialize extractors based on configuration.
+
+        Args:
+            None
         
         Returns:
             Dictionary mapping extraction types to extractor instances
@@ -120,6 +114,9 @@ class AsyncCrawler(BaseCrawler):
 
         Returns:
             The crawl response
+
+        Raises:
+            RuntimeError: If the crawler is not set up.
         """
         if not self._session:
             raise RuntimeError(
@@ -130,14 +127,11 @@ class AsyncCrawler(BaseCrawler):
 
         for attempt in range(self.config.max_retries):
             try:
-                # Merge request headers with config headers
                 headers = {**self.config.headers, **request.headers}
                 cookies = {**self.config.cookies, **request.cookies}
 
-                # Prepare proxy
                 proxy = self._proxies.rotate_proxy()
 
-                # Make the request
                 async with self._semaphore:
                     async with self._session.request(
                         method=request.method,
@@ -164,7 +158,6 @@ class AsyncCrawler(BaseCrawler):
                             metadata=request.metadata,
                         )
                         
-                        # Apply extraction if configured
                         extraction_type = request.extraction_strategy or self.config.extraction_strategy
                         if extraction_type:
                             extractor = self._get_extractor(extraction_type)
@@ -179,30 +172,13 @@ class AsyncCrawler(BaseCrawler):
                         
                         return crawl_response
 
-            except asyncio.TimeoutError as e:
-                last_error = f"Timeout error: {e}"
-                logger.warning(
-                    f"Timeout for {request.url} (attempt {attempt + 1}/{self.config.max_retries})"
-                )
-
-            except aiohttp.ClientError as e:
-                last_error = f"Client error: {e}"
-                logger.warning(
-                    f"Client error for {request.url} (attempt {attempt + 1}/{self.config.max_retries}): {e}"
-                )
-
             except Exception as e:
                 last_error = f"Unexpected error: {e}"
-                logger.error(
-                    f"Unexpected error for {request.url} (attempt {attempt + 1}/{self.config.max_retries}): {e}"
-                )
 
-            # Wait before retrying (exponential backoff)
             if attempt < self.config.max_retries - 1:
                 wait_time = self.config.retry_delay * (2**attempt)
                 await asyncio.sleep(wait_time)
 
-        # All retries failed, return error response
         return CrawlResponse(
             url=request.url,
             status=0,
@@ -222,5 +198,6 @@ class AsyncCrawler(BaseCrawler):
         Returns:
             List of all crawl responses
         """
+
         tasks = [asyncio.create_task(self.fetch(request)) for request in requests]
         return await asyncio.gather(*tasks)

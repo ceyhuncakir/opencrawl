@@ -1,7 +1,6 @@
 from typing import List, Optional
 
 import json
-import os
 from pathlib import Path
 
 from opencrawl import (

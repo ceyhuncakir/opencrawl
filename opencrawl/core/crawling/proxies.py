@@ -4,13 +4,10 @@ Proxies module for managing proxy servers.
 This module provides a simple interface for loading, checking, and rotating proxies.
 """
 
-import logging
 import random
 import urllib.request
 
 from .structures import Proxy
-
-logger = logging.getLogger(__name__)
 
 class Proxies:
     """
@@ -26,11 +23,20 @@ class Proxies:
     def __init__(self, proxies: str):
         self._proxies = proxies
         self._proxy_list = self._load_proxies()
+        
         if self._proxy_list:
             self._check_proxies()
 
     def _load_proxies(self) -> list[Proxy]:
-        """Load proxies from a file or a string."""
+        """Load proxies from a file or a string.
+
+        Args:
+            None
+
+        Returns:
+            A list of Proxy objects.
+        """
+
         if not self._proxies:
             return []
 
@@ -57,8 +63,6 @@ class Proxies:
         Returns:
             None
         """
-
-        logger.info(f"Checking {len(self._proxy_list)} proxies...")
         
         for proxy in self._proxy_list:
             try:
@@ -71,10 +75,9 @@ class Proxies:
                 
                 # Test the proxy with a simple request
                 opener.open("http://httpbin.org/ip", timeout=5)
-                logger.info(f"Proxy OK: {proxy.url}")
                 
-            except Exception as e:
-                logger.warning(f"Proxy check failed for {proxy.url}: {e}")
+            except Exception:
+                pass
 
     def rotate_proxy(self) -> Proxy:
         """
@@ -90,4 +93,5 @@ class Proxies:
         """
         if not self._proxy_list:
             return Proxy("")
+            
         return random.choice(self._proxy_list)
