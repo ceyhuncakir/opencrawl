@@ -30,7 +30,15 @@ pip install opencrawl
 With uv
 ```
 uv add opencrawl
+
 ```
+
+# TODO
+- [ ] Write tests
+- [ ] create more extraction strategies
+- [ ] add more proxy strategies
+- [ ] Captcha bypasses
+- [ ] better model support from VLLM
 
 # Features
 
@@ -84,11 +92,11 @@ uv add opencrawl
 ## Model Features
 
 <details>
-<summary><b>vLLM-Powered Inference</b></summary>
+<summary><b>Transformers-Powered Inference</b></summary>
 
-- **High-Performance**: Built on vLLM for fast inference with open-source models
-- **Multi-GPU Support**: Tensor parallel execution across multiple GPUs
-- **Memory Management**: Configurable GPU memory utilization and swap space
+- **Flexible & Easy**: Built on HuggingFace Transformers for easy model integration
+- **Multi-GPU Support**: Automatic device mapping across multiple GPUs
+- **Cross-Platform**: Works on Linux, macOS (MPS), and CPU
 - **Batch Generation**: Efficient batch processing for multiple requests
 
 </details>
@@ -98,8 +106,8 @@ uv add opencrawl
 
 - **Flexible Model Loading**: Support for any HuggingFace model
 - **Data Type Options**: Choose between auto, float16, bfloat16, and float32
-- **Custom Download**: Specify custom download directories for models
-- **Sequence Length Control**: Configure maximum model and batch token lengths
+- **Custom Download**: Specify custom cache directories for models
+- **Device Mapping**: Automatic or manual device mapping for multi-GPU setups
 - **Trust Remote Code**: Option to trust remote code for specialized models
 
 </details>
@@ -109,9 +117,9 @@ uv add opencrawl
 
 - **Temperature & Sampling**: Fine-tune creativity with temperature, top_p, and top_k
 - **Token Control**: Set min/max tokens, stop sequences, and EOS handling
-- **Penalties**: Apply presence, frequency, and repetition penalties
-- **Multiple Outputs**: Generate n outputs and select best of m candidates
-- **Log Probabilities**: Access token-level log probabilities for analysis
+- **Penalties**: Apply repetition and length penalties for better generation quality
+- **Multiple Outputs**: Generate multiple sequences and control output diversity
+- **Stopping Criteria**: Custom stopping criteria with stop strings support
 
 </details>
 
@@ -170,7 +178,8 @@ async def llm_crawl_example():
         ),
         model_config=ModelConfig(
             model="Qwen/Qwen2.5-0.5B-Instruct",
-            tensor_parallel_size=1,
+            dtype="float16",
+            device_map="auto",
         ),
         output_path="output.json"
     )
@@ -209,9 +218,11 @@ async def structured_extraction():
         crawl_config=CrawlerConfig(),
         model_config=ModelConfig(
             model="Qwen/Qwen2.5-0.5B-Instruct",
+            dtype="float16",
             gen_config=GenerationConfig(
                 temperature=0.7,
-                max_tokens=512,
+                max_new_tokens=512,
+                do_sample=True,
                 structured_outputs=ArticleData,
             ),
         ),
@@ -229,6 +240,10 @@ asyncio.run(structured_extraction())
 
 ## Contributions
 This project is in its very early stages, but any contributions towards the project is highgly appreciatied. Just open a PR and i will have an look at it, and if its fits the projects vision, i will gladly merge it in.
+
+## Disclaimer
+
+This software is provided "as is", without warranty of any kind, express or implied. The developers of OpenCrawl are not responsible for any damages, legal issues, or consequences arising from the use or misuse of this tool. Users are solely responsible for ensuring their use complies with applicable laws, terms of service, and ethical guidelines.
 
 ## License
 This project is licensed wit the Apache 2.0 license. Please have a look at the license if your not sure what the kind of rules it requires.
